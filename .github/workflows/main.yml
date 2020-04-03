@@ -12,8 +12,8 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # DEBUG
-  debug_build:
+  # UBUNTU
+  linux_debug:
     # The type of runner that the job will run on
     runs-on: [ubuntu-18.04]
 
@@ -33,31 +33,37 @@ jobs:
     
     # Building
     - name: Build
-      run: |
-        cd build
-        make -j `nproc`
+      working-directory: build
+      run: make -j `nproc`
   
-  # RELEASE
-  release_build:
+  # WINDOWS
+  windows-debug:
     # The type of runner that the job will run on
-    runs-on: [ubuntu-18.04]
+    runs-on: [windows]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-
-    - name: Install Dependencies
-      run: sudo apt install cmake build-essential liblua5.2-dev libgmp3-dev libmysqlclient-dev libboost-system-dev libboost-iostreams-dev libboost-filesystem-dev libpugixml-dev libcrypto++-dev
+    - name: Checkout branch
+      uses: actions/checkout@v2
+      
+    - name: Setup VS2019
+      uses: richardo2016/Setup-MSBuild@releases/clangcl_x_2017/v1
+      
+    - name: Install VCPKG
+      run: |
+        git clone https://github.com/Microsoft/vcpkg
+        cd vcpkg
+        .\bootstrap-vcpkg.bat
+        .\vcpkg integrate install
 
     # Runs a set of commands using the runners shell
     - name: Prepare build Environment
       run: |
-        mkdir build && cd build
-        cmake -DCMAKE_BUILD_TYPE=Release ..
+        vcpkg install boost-iostreams:x64-windows boost-asio:x64-windows boost-system:x64-windows boost-filesystem:x64-windows boost-variant:x64-windows boost-lockfree:x64-windows luajit:x64-windows libmariadb:x64-windows pugixml:x64-windows mpir:x64-windows cryptopp:x64-windows
     
     # Building
     - name: Build
-      run: |
-        cd build
-        make -j `nproc`
+      working-directory: vc14
+      run: msbuild theforgottenserver.vcxproj
+        
