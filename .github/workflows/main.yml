@@ -49,6 +49,9 @@ jobs:
       
     - name: Setup VS Dev Environment
       uses: seanmiddleditch/gha-setup-vsdevenv@v1
+    
+    - name: Setup VS2019
+      uses: richardo2016/Setup-MSBuild@releases/clangcl_x_2017/v1
  
     - name: Install VCPKG
       run: |
@@ -57,6 +60,17 @@ jobs:
         .\bootstrap-vcpkg.bat
         .\vcpkg integrate install
     
+    - name: Cache Build Dependencies
+      uses: actions/cache@v1
+      env:
+        cache-name: cache-build-deps-windows
+      with:
+        path: ./vcpkg/packages # npm cache files are stored in `~/.npm` on Linux/macOS
+        key: ${{ runner.os }}-build-${{ env.cache-name }}
+        restore-keys: |
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+
     # Runs a set of commands using the runners shell
     - name: Prepare build Environment
       run: |
