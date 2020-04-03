@@ -49,12 +49,12 @@ jobs:
       
     - name: Setup VS Dev Environment
       uses: seanmiddleditch/gha-setup-vsdevenv@v1
-    
-    - name: setup-msbuild
-      uses: microsoft/setup-msbuild@v1
       with:
-        components: Microsoft.VisualStudio.Workload.NativeDesktop;Microsoft.VisualStudio.Component.VC.Tools.x86.x64 
+        components: Microsoft.VisualStudio.Workload.NativeDesktop
 
+    # - name: setup-msbuild
+    #   uses: microsoft/setup-msbuild@v1
+      
     - name: Install VCPKG
       run: |
         git clone https://github.com/Microsoft/vcpkg
