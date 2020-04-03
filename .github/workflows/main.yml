@@ -52,6 +52,8 @@ jobs:
     
     - name: setup-msbuild
       uses: microsoft/setup-msbuild@v1
+      with:
+        components: Microsoft.VisualStudio.Workload.NativeDesktop;Microsoft.VisualStudio.Component.VC.Tools.x86.x64 
 
     - name: Install VCPKG
       run: |
@@ -66,7 +68,7 @@ jobs:
       env:
         cache-name: cache-build-deps-windows
       with:
-        path: ./vcpkg/packages # npm cache files are stored in `~/.npm` on Linux/macOS
+        path: c:/vcpkg/ # npm cache files are stored in `~/.npm` on Linux/macOS
         key: ${{ runner.os }}-build-${{ env.cache-name }}
         restore-keys: |
           ${{ runner.os }}-build-
