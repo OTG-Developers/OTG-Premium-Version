@@ -47,8 +47,11 @@ jobs:
     - name: Checkout branch
       uses: actions/checkout@v2
       
-    - name: Setup VS2019
-      uses: richardo2016/Setup-MSBuild@releases/clangcl_x_2017/v1
+    - name: setup-msbuild
+      uses: microsoft/setup-msbuild@v1
+      with:
+        # Version of Visual Studio to search; defaults to latest if not specified
+        vs-version: [17.0,19.0] # optional
       
     - name: Install VCPKG
       run: |
