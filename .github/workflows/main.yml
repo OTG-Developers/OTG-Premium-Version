@@ -77,9 +77,8 @@ jobs:
       run: |
         vcpkg install boost-iostreams:x64-windows boost-asio:x64-windows boost-system:x64-windows boost-filesystem:x64-windows boost-variant:x64-windows boost-lockfree:x64-windows luajit:x64-windows libmariadb:x64-windows pugixml:x64-windows mpir:x64-windows cryptopp:x64-windows
     
-#     # Building
-#     - name: Build
-#       working-directory: vc14
-#       run: msbuild theforgottenserver.sln
+    # Building
+    - name: Build
+      run: msbuild vc14/theforgottenserver.sln
 
         
