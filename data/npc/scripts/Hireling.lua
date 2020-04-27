@@ -13,7 +13,7 @@ local function creatureSayCallback(cid, type, msg)
 	end
 	local player = Player(cid)
 	if(msgcontains(msg, "mission")) then
-		
+		print('blabla')
 	elseif(msgcontains(msg, "yes")) then
 		if(npcHandler.topic[cid] == 1) then
 			npcHandler:say({
@@ -34,10 +34,18 @@ local function creatureSayCallback(cid, type, msg)
 	return true
 end
 
-keywordHandler:addKeyword({"job"}, StdModule.say, {npcHandler = npcHandler, text = "I am a travelling trader. I don't buy everything, though. And not from everyone, for that matter."})
-keywordHandler:addKeyword({"name"}, StdModule.say, {npcHandler = npcHandler, text = "I am Rashid, son of the desert."})
+local function getHirelingServices(player)
+	if not player then return end
 
-npcHandler:setMessage(MESSAGE_GREET, "Ah, a customer! Be greeted, |PLAYERNAME|!")
+	local skillStorage = player:getStorageValue(HIRELING_SKILL_STORAGE)
+
+
+
+end
+
+keywordHandler:addKeyword({"service"}, StdModule.say, {npcHandler = npcHandler, text = "I am a travelling trader. I don't buy everything, though. And not from everyone, for that matter."})
+
+npcHandler:setMessage(MESSAGE_GREET, "It is good to see you. I'm always at your {service}")
 npcHandler:setMessage(MESSAGE_FAREWELL, "Farewell, |PLAYERNAME|, may the winds guide your way.")
 npcHandler:setMessage(MESSAGE_WALKAWAY, "Come back soon!")
 npcHandler:setMessage(MESSAGE_SENDTRADE, "Take all the time you need to decide what you want!")
