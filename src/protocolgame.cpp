@@ -3133,6 +3133,7 @@ void ProtocolGame::sendCreatureHealth(const Creature* creature)
 
 	if (creature->isHealthHidden()) {
 		msg.addByte(0x00);
+		return;
 	} else {
 		msg.addByte(std::ceil((static_cast<double>(creature->getHealth()) / std::max<int32_t>(creature->getMaxHealth(), 1)) * 100));
 	}
@@ -3927,6 +3928,7 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 
 	const Player* otherPlayer = creature->getPlayer();
 
+	
 	if (known) {
 		msg.add<uint16_t>(0x62);
 		msg.add<uint32_t>(creature->getID());
@@ -3934,8 +3936,12 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 		msg.add<uint16_t>(0x61);
 		msg.add<uint32_t>(remove);
 		msg.add<uint32_t>(creature->getID());
-		msg.addByte(creatureType);
 
+		if (player->getProtocolVersion() >= 1120 && creature->isHealthHidden()) {
+			msg.addByte(5);
+		} else {
+			msg.addByte(creatureType);
+		}
 		if (player->getProtocolVersion() >= 1120) {
 			if (creatureType == CREATURETYPE_SUMMONPLAYER) {
 				const Creature* master = creature->getMaster();
@@ -3945,10 +3951,15 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 			}
 		}
 
-		msg.addString(creature->getName());
+		if (creature->isHealthHidden()) {
+			msg.addString("");
+		} else {
+			msg.addString(creature->getName());
+		}
 	}
 
 	if (creature->isHealthHidden()) {
+		std::cout << "Health hidden" << std::endl;
 		msg.addByte(0x00);
 	} else {
 		msg.addByte(std::ceil((static_cast<double>(creature->getHealth()) / std::max<int32_t>(creature->getMaxHealth(), 1)) * 100));
@@ -3988,7 +3999,12 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 		}
 	}
 
-	msg.addByte(creatureType); // Type (for summons)
+	if(creature->isHealthHidden()){
+		msg.addByte(5);
+	} else {
+		msg.addByte(creatureType); // Type (for summons)
+	}
+	
 
 	if (player->getProtocolVersion() >= 1120) {
 		if (creatureType == CREATURETYPE_SUMMONPLAYER) {

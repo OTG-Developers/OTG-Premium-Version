@@ -2792,6 +2792,7 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("House", "setAccessList", LuaScriptInterface::luaHouseSetAccessList);
 
 	registerMethod("House", "kickPlayer", LuaScriptInterface::luaHouseKickPlayer);
+	registerMethod("House", "isInvited", LuaScriptInterface::luaHouseIsInvited);
 
 	// ItemType
 	registerClass("ItemType", "", LuaScriptInterface::luaItemTypeCreate);
@@ -12364,6 +12365,25 @@ int LuaScriptInterface::luaHouseKickPlayer(lua_State* L)
 	}
 
 	pushBoolean(L, house->kickPlayer(getPlayer(L, 2), getPlayer(L, 3)));
+	return 1;
+}
+
+int LuaScriptInterface::luaHouseIsInvited(lua_State* L)
+{
+	// house:isInvited(player)
+	House* house = getUserdata<House>(L, 1);
+	if (!house) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	Player* player = getPlayer(L, 2);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	pushBoolean(L, house->isInvited(player));
 	return 1;
 }
 

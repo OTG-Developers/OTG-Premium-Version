@@ -1186,7 +1186,7 @@ class LuaScriptInterface
 		static int luaHouseSetAccessList(lua_State* L);
 
 		static int luaHouseKickPlayer(lua_State* L);
-
+		static int luaHouseIsInvited(lua_State* L);
 		// ItemType
 		static int luaItemTypeCreate(lua_State* L);
 
