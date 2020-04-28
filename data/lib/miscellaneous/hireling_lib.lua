@@ -62,8 +62,7 @@ Hireling = {
   lookhead = 97,
   looklegs = 3,
   looktype = 0,
-  unlocked_outfits = {},
-  npcHandler = nil
+  unlocked_outfits = {}
 }
 
 function Hireling:new(o)
@@ -93,16 +92,18 @@ function Hireling:getPosition()
   return Position(self.posx,self.posy, self.posz)
 end
 
-function Hireling:getNpcHandler()
-  return self.npcHandler
+function Hireling:hasSkill(SKILL)
+  local player = Player(self.player_id)
+  local skills = player:getStorageValue(HIRELING_SKILL_STORAGE)
+  return hasBitSet(SKILL, skills)
 end
-
-
 -- [[ END CLASS DEFINITION ]]
 
 -- [[ GLOBAL FUNCTIONS DEFINITION ]]
 
-
+function getHirelingByPosition(position)
+  --TODO
+end
 
 function HirelingsInit()
   local rows = db.storeQuery("SELECT * FROM `player_hirelings`")
