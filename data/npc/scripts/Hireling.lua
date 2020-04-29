@@ -1,9 +1,36 @@
 local keywordHandler = KeywordHandler:new()
 local npcHandler = NpcHandler:new(keywordHandler)
 NpcSystem.parseParameters(npcHandler)
+
+local variousModule = ShopModule:new()
+local variousBuyable = "amphora,2023,4,0;armor rack kit,6114,90;bamboo drawer kit,3921,20;bamboo table kit,3914,25;barrel kit,3919,12;"
+local equipmentModule = ShopModule:new()
+local distanceModule = ShopModule:new()
+local wandsModule = ShopModule:new()
+local rodsModule = ShopModule:new()
+local potionsModule = ShopModule:new()
+local runesModule = ShopModule:new()
+local suppliesModule = ShopModule:new()
+local toolsModule = ShopModule:new()
+local postalModule = ShopModule:new()
+
 local hireling = nil
 local count = {} -- for banking
 local transfer = {} -- for banking
+
+--[[ str = "I sell a {selection} of {various} items, {equipment}, " .. 
+			"{distance} weapons, {wands} and {rods}, {potions}, {runes}, " .. 
+			"{supplies}, {tools} and {postal} goods. Just ask!" ]]
+
+local function initShopModules()
+	local shop_trade_backup = SHOP_TRADEREQUEST
+	SHOP_TRADEREQUEST = {'various'}
+	variousModule:parseBuyable(variousBuyable)
+	npcHandler:addModule(variousModule)
+	SHOP_TRADEREQUEST = shop_trade_backup
+
+end
+
 function onCreatureAppear(cid)
 	npcHandler:onCreatureAppear(cid)
 	local creature = Creature(cid)
@@ -16,6 +43,8 @@ function onCreatureAppear(cid)
 
 	local npc = Npc(cid)
 	npc:setName(hireling.name)
+
+	initShopModules()
 end
 
 function onCreatureDisappear(cid)		npcHandler:onCreatureDisappear(cid)			end
@@ -756,7 +785,8 @@ local function handleGoodsActions(cid, msg)
 	local player = Player(cid)
 
 	if msgcontains(msg, "various") then
-		
+		local shopModule = ShopModule:new()
+
 	end
 end
 -- ======================[[ END TRADER FUNCTIONS ]] ======================== --
@@ -767,7 +797,7 @@ local function creatureSayCallback(cid, type, msg)
 		return false
 	end
 
-	--validate if user is inside the same house as the hireling
+	--TODO validate if user is inside the same house as the hireling
 
 	if(msgcontains(msg, "service")) then
 		setTopic(cid,TOPIC.SERVICES)
