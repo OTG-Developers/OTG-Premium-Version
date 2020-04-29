@@ -2,18 +2,6 @@ local keywordHandler = KeywordHandler:new()
 local npcHandler = NpcHandler:new(keywordHandler)
 NpcSystem.parseParameters(npcHandler)
 
-local variousModule = ShopModule:new()
-local variousBuyable = "amphora,2023,4,0;armor rack kit,6114,90;bamboo drawer kit,3921,20;bamboo table kit,3914,25;barrel kit,3919,12;"
-local equipmentModule = ShopModule:new()
-local distanceModule = ShopModule:new()
-local wandsModule = ShopModule:new()
-local rodsModule = ShopModule:new()
-local potionsModule = ShopModule:new()
-local runesModule = ShopModule:new()
-local suppliesModule = ShopModule:new()
-local toolsModule = ShopModule:new()
-local postalModule = ShopModule:new()
-
 local hireling = nil
 local count = {} -- for banking
 local transfer = {} -- for banking
@@ -21,15 +9,6 @@ local transfer = {} -- for banking
 --[[ str = "I sell a {selection} of {various} items, {equipment}, " .. 
 			"{distance} weapons, {wands} and {rods}, {potions}, {runes}, " .. 
 			"{supplies}, {tools} and {postal} goods. Just ask!" ]]
-
-local function initShopModules()
-	local shop_trade_backup = SHOP_TRADEREQUEST
-	SHOP_TRADEREQUEST = {'various'}
-	variousModule:parseBuyable(variousBuyable)
-	npcHandler:addModule(variousModule)
-	SHOP_TRADEREQUEST = shop_trade_backup
-
-end
 
 function onCreatureAppear(cid)
 	npcHandler:onCreatureAppear(cid)
@@ -44,7 +23,6 @@ function onCreatureAppear(cid)
 	local npc = Npc(cid)
 	npc:setName(hireling.name)
 
-	initShopModules()
 end
 
 function onCreatureDisappear(cid)		npcHandler:onCreatureDisappear(cid)			end
@@ -57,6 +35,19 @@ local TOPIC = {
 	BANK = 1200,
 	FOOD = 1300,
 	GOODS = 1400
+}
+
+local TOPIC_GOODS = {
+	VARIOUS = 1401,
+	EQUIPMENT = 1402,
+	DISTANCE = 1403,
+	WANDS = 1404,
+	RODS = 1405,
+	POTIONS = 1406,
+	RUNES = 1407,
+	SUPPLIES = 1408,
+	TOOLS = 1409,
+	POSTAL = 1410
 }
 
 local GREETINGS = {
@@ -767,8 +758,13 @@ local function handleBankActions(cid, msg)
 	return true
 end
 -- ======================[[ END BANKING FUNCTIONS ]] ======================== --
-
+--[[
+############################################################################
+############################################################################
+############################################################################
+]]
 -- ========================[[ TRADER FUNCTIONS ]] ========================== --
+
 local function getGoodsMessage()
 	local str
 	if not hireling:hasSkill(HIRELING_SKILLS.TRADER) then
@@ -781,11 +777,60 @@ local function getGoodsMessage()
 	return str
 end
 
+local function getTable(cid)
+	local topic = getTopic(cid)
+	if topic == TOPIC_GOODS.VARIOUS then 
+		return HIRELING_GOODS.VARIOUS
+	elseif topic == TOPIC_GOODS.EQUIPMENT then
+		return HIRELING_GOODS.EQUIPMENT
+	elseif topic == TOPIC_GOODS.DISTANCE then
+		return HIRELING_GOODS.DISTANCE
+	elseif topic == TOPIC_GOODS.WANDS then
+		return HIRELING_GOODS.WANDS
+	elseif topic == TOPIC_GOODS.RODS then
+		return HIRELING_GOODS.RODS
+	elseif topic == TOPIC_GOODS.POTIONS then
+		return HIRELING_GOODS.POTIONS
+	elseif topic == TOPIC_GOODS.RUNES then
+		return HIRELING_GOODS.RUNES
+	elseif topic == TOPIC_GOODS.SUPPLIES then
+		return HIRELING_GOODS.SUPPLIES
+	elseif topic == TOPIC_GOODS.TOOLS then
+		return HIRELING_GOODS.TOOLS
+	elseif topic == TOPIC_GOODS.POSTAL then
+		return HIRELING_GOODS.POSTAL
+	end
+end
+
+local function setNewTradeTable(table)
+	local items, item = {}
+	for i = 1, #table do
+		item = table[i]
+		items[item.id] = {itemId = item.id, buyPrice = item.buy, sellPrice = item.sell, subType = 0, realName = item.name}
+	end
+	return items
+end
+
+local function onBuy(cid, item, subType, amount, ignoreCap, inBackpacks)
+	local player = Player(cid)
+	local items = setNewTradeTable(getTable(cid))
+	if not ignoreCap and player:getFreeCapacity() < ItemType(items[item].itemId):getWeight(amount) then
+		return player:sendTextMessage(MESSAGE_INFO_DESCR, 'You don\'t have enough cap.')
+	end
+	if not player:removeMoneyNpc(items[item].buyPrice * amount) then
+		selfSay("You don't have enough money.", cid)
+	else
+		player:addItem(items[item].itemId, amount)
+		return player:sendTextMessage(MESSAGE_INFO_DESCR, 'Bought '..amount..'x '..items[item].realName..' for '..items[item].buyPrice * amount..' gold coins.')
+	end
+	return true
+end
+
 local function handleGoodsActions(cid, msg)
 	local player = Player(cid)
 
 	if msgcontains(msg, "various") then
-		local shopModule = ShopModule:new()
+		
 
 	end
 end

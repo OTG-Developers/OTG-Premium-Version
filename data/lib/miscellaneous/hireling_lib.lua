@@ -46,6 +46,28 @@ HIRELING_SEX = {
   MALE = 1
 }
 
+-- TODO: fullfill this table
+
+HIRELING_GOODS = {
+  VARIOUS = {
+    {name="amphora", id=2023, buy=4},
+    {name="armor rack kit", id=6114, buy=90}
+  },
+	EQUIPMENT = {},
+	DISTANCE = {
+    { name="arrow", id=2544, buy=3 },
+    { name="bolt", id=2543, buy=4 },
+    { name="bow", id=2456, buy=400, sell=100}
+  },
+	WANDS = {},
+	RODS = {},
+	POTIONS = {},
+	RUNES = {},
+	SUPPLIES = {},
+	TOOLS = {},
+	POSTAL = {}
+}
+
 Hireling = {
   id = -1,
   player_id = -1,
