@@ -41,7 +41,10 @@ HIRELING_SKILLS = {
 }
 
 HIRELING_SKILL_STORAGE = 28800
+
 HIRELING_LAMP_ID = 34070
+HIRELING_ATTRIBUTE = "HIRELING_ID"
+
 HIRELING_SEX = {
   FEMALE = 0,
   MALE = 1
@@ -134,6 +137,12 @@ function Hireling:getPosition()
   return Position(self.posx,self.posy, self.posz)
 end
 
+function Hireling:setPosition(pos)
+  self.posx = pos.x
+  self.posy = pos.y
+  self.posz = pos.z
+end
+
 function Hireling:hasSkill(SKILL)
   local player = Player(self.player_id)
   local skills = player:getStorageValue(HIRELING_SKILL_STORAGE)
@@ -172,7 +181,7 @@ function Hireling:returnToLamp(player_id)
   local lamp = inbox:addItem(HIRELING_LAMP_ID, 1)
   creature:remove() --remove hireling
   lamp:setAttribute(ITEM_ATTRIBUTE_DESCRIPTION, "This mysterious lamp summons your very own personal hireling.\nThis item cannot be traded.\nThis magic lamp is the home of" .. self:getName() .. ".")
-  lamp:setAttribute(ITEM_ATTRIBUTE_DATE, self:getId()) --hack to keep hirelingId on item
+  lamp:setSpecialAttribute(HIRELING_ATTRIBUTE, self:getId()) --save hirelingId on item
   self.active = 0
 end
 -- [[ END CLASS DEFINITION ]]
@@ -191,6 +200,16 @@ local function spawnNPCs()
 end
 
 -- [[ GLOBAL FUNCTIONS DEFINITIONS ]]
+function getHirelingById(id)
+  local hireling
+  for i = 1, #HIRELINGS do
+    hireling = HIRELINGS[i]
+    if hireling:getId() == id then
+      return hireling
+    end
+  end
+  return nil
+end
 
 function getHirelingByPosition(position)
   local hireling
