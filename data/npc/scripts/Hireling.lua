@@ -6,10 +6,6 @@ local hireling = nil
 local count = {} -- for banking
 local transfer = {} -- for banking
 
---[[ str = "I sell a {selection} of {various} items, {equipment}, " .. 
-			"{distance} weapons, {wands} and {rods}, {potions}, {runes}, " .. 
-			"{supplies}, {tools} and {postal} goods. Just ask!" ]]
-
 function onCreatureAppear(cid)
 	npcHandler:onCreatureAppear(cid)
 	local creature = Creature(cid)
@@ -18,13 +14,12 @@ function onCreatureAppear(cid)
 	local position = creature:getPosition()
 
 	hireling = getHirelingByPosition(position)
+	hireling:setCreature(cid)
 	creature:setOutfit({ lookType=hireling.looktype,lookHead=hireling.lookhead,lookAddons=0,lookLegs=hireling.looklegs,lookBody=hireling.lookbody,lookFeet=hireling.lookfeet})
 
 	local npc = Npc(cid)
 	npc:setName(hireling.name)
-
 end
-
 function onCreatureDisappear(cid)		npcHandler:onCreatureDisappear(cid)			end
 function onCreatureSay(cid, type, msg)		npcHandler:onCreatureSay(cid, type, msg)		end
 function onThink()				npcHandler:onThink()					end
@@ -35,6 +30,10 @@ local TOPIC = {
 	BANK = 1200,
 	FOOD = 1300,
 	GOODS = 1400
+}
+
+local TOPIC_FOOD = {
+	SKILL_CHOOSE = 1301
 }
 
 local TOPIC_GOODS = {
@@ -53,8 +52,7 @@ local TOPIC_GOODS = {
 local GREETINGS = {
 	BANK = "Alright! What can I do for you and your bank business, |PLAYERNAME|?",
 	FOOD = "Hmm, yes! A variety of fine food awaits! However, a small expense of 15000 gold is expected to make these delicious masterpieces happen. Shall I?",
-	STASH = "Of course, here is your stash! Well-maintained and neatly sorted for your convenience!",
-	GOODS = ""
+	STASH = "Of course, here is your stash! Well-maintained and neatly sorted for your convenience!"
 }
 
 local function setTopic(cid, topic) 
@@ -128,6 +126,8 @@ local function sendSkillNotLearned(cid, SKILL)
 	npcHandler:say(message, cid)
 end
 
+-- ----------------------[[ STEWARD FUNCTIONS ]] ------------------------------
+
 local function openPlayerStash(cid)
 	local player = Player(cid)
 	if not player then return end
@@ -140,6 +140,12 @@ local function openPlayerStash(cid)
 	end
 end
 
+-- ----------------------[[ END STEWARD FUNCTIONS ]] ------------------------------
+--[[
+############################################################################
+############################################################################
+############################################################################
+]]
 -- ----------------------[[ BANKING FUNCTIONS ]] ------------------------------
 -------------------------------- guild bank -----------------------------------------------
 local receiptFormat = 'Date: %s\nType: %s\nGold Amount: %d\nReceipt Owner: %s\nRecipient: %s\n\n%s'
@@ -765,7 +771,7 @@ end
 ]]
 -- ========================[[ TRADER FUNCTIONS ]] ========================== --
 
-local function getGoodsMessage()
+local function getGoodsGreetingMessage()
 	local str
 	if not hireling:hasSkill(HIRELING_SKILLS.TRADER) then
 		str = "While I'm not a trader, I still have a collection of {various} items to sell if you like!"
@@ -826,25 +832,183 @@ local function onBuy(cid, item, subType, amount, ignoreCap, inBackpacks)
 	return true
 end
 
+local function getTradeMessage(cid)
+	local topic = getTopic(cid)
+	local msg = "Here you go!"
+
+	if topic == TOPIC_GOODS.EQUIPMENT then
+		msg = "Alright, here's all the equipment I can order for you!"
+	elseif topic == TOPIC_GOODS.DISTANCE then
+		msg = "Great, here are the distance weapons I can order for you!"
+	elseif topic == TOPIC_GOODS.WANDS then
+		msg = "Ok, here are the wands I can order for you!"
+	elseif topic == TOPIC_GOODS.RODS then
+		msg = "Nice, here are the rods I can order for you!"
+	elseif topic == TOPIC_GOODS.POTIONS then
+		msg = "Sure, here are all the potions I can order for you!"
+	elseif topic == TOPIC_GOODS.RUNES then
+		msg = "With pleasure, here are all the runes I can order for you!"
+	elseif topic == TOPIC_GOODS.SUPPLIES then
+		msg = "Here are some supplies to get you through the day!"
+	elseif topic == TOPIC_GOODS.TOOLS then
+		msg = "All the handy tools you'll ever need!"
+	elseif topic == TOPIC_GOODS.POSTAL then
+		msg = "I have all the necessary items to properly enhance your communication, feel free to browse!"
+	end
+
+	return msg
+end
+
+local function sendTradeWindow(cid)
+	openShopWindow(cid, getTable(cid), onBuy, onSell)
+	local response = getTradeMessage()
+	npcHandler:say(response, cid)
+end
+
+
 local function handleGoodsActions(cid, msg)
-	local player = Player(cid)
-
 	if msgcontains(msg, "various") then
-		
+		setTopic(cid, TOPIC_GOODS.VARIOUS)
+	elseif msgcontains(msg, "equipment") then
+		setTopic(cid, TOPIC_GOODS.EQUIPMENT)
+	elseif msgcontains(msg, "distance") then
+		setTopic(cid, TOPIC_GOODS.DISTANCE)
+	elseif msgcontains(msg, "wands") then
+		setTopic(cid, TOPIC_GOODS.WANDS)
+	elseif msgcontains(msg, "rods") then
+		setTopic(cid, TOPIC_GOODS.RODS)
+	elseif msgcontains(msg, "potions") then
+		setTopic(cid, TOPIC_GOODS.POTIONS)
+	elseif msgcontains(msg, "runes") then
+		setTopic(cid, TOPIC_GOODS.RUNES)
+	elseif msgcontains(msg, "supplies") then
+		setTopic(cid, TOPIC_GOODS.SUPPLIES)
+	elseif msgcontains(msg, "tools") then
+		setTopic(cid, TOPIC_GOODS.TOOLS)
+	elseif msgcontains(msg, "postal") then
+		setTopic(cid, TOPIC_GOODS.POSTAL)
+	end
 
+	
+	if table.contains(TOPIC_GOODS, getTopic(cid)) then
+		sendTradeWindow(cid)
 	end
 end
+
 -- ======================[[ END TRADER FUNCTIONS ]] ======================== --
+--[[
+############################################################################
+############################################################################
+############################################################################
+]]
+-- ========================[[ COOKER FUNCTIONS ]] ========================== --
+
+local function getDeliveredMessageByFoodId(food_id) -- remove the hardcoded food ids
+	local msg = ""
 
 
+	if food_id == 35172 then
+		msg = "Oh yes, a tasty roasted wings to make you even tougher and skilled with the defensive arts."
+	elseif food_id == 35173 then
+		msg = "Divine! Carrot is a well known nourishment that makes the eyes see even more sharply."
+	elseif food_id == 35174 then
+		msg = "Magnifique! A tiger meat that has been marinated for several hours in magic spices."
+	elseif food_id == 35175 then
+		msg = "Aaah, the beauty of the simple dishes! A delicate salad made of selected ingredients, capable of bring joy to the hearts of bravest warriors and their weapons."
+	elseif food_id == 35176 then
+		msg = "Oh yes, very spicy chilly combined with delicious minced carniphila meat and a side dish of fine salad!"
+	elseif food_id == 35177 then
+		msg = "Aaah, the northern cuisine! A catch of fresh salmon right from the coast Svargrond is the base of this extraordinary fish dish."
+	elseif food_id == 35178 then
+		msg = "A traditional and classy meal. A beefy casserole which smells far better than it sounds!"
+	elseif food_id == 35179 then
+		msg = "A tasty chunk of juicy beef with an aromatic sauce and parsley potatoes, mmh!"
+	elseif food_id == 35180 then
+		msg = "Oooh, well... that one didn't quite turn out as it was supposed to be, I'm sorry."
+	end
+
+	return msg
+end
+
+local function deliverFood(cid, food_id)
+	local player = Player(cid)
+	local itType = ItemType(food_id)
+	local inbox = player:getSlotItem(CONST_SLOT_STORE_INBOX)
+
+	if player:getFreeCapacity() < itType:getWeight(1) then
+		npcHandler:say("Sorry, but you don't have enough capacity.", cid)
+	elseif not inbox or inbox:getEmptySlots() == 0 then
+		player:getPosition():sendMagicEffect(CONST_ME_POFF)
+		npcHandler:say("Sorry, you don't have enough room on your inbox", cid)
+	elseif not player:removeMoneyNpc(15000) then
+		npcHandler:say("Sorry, you don't have enough money.", cid)
+	else
+		inbox:addItem(food_id, 1, INDEX_WHEREEVER, FLAG_NOLIMIT)
+		local msg = getDeliveredMessageByFoodId(food_id)
+		npcHandler:say(msg, cid)
+	end
+	setTopic(TOPIC.SERVICES)
+end
+
+local function cookFood(cid)
+	local random = math.random(6)
+	if random == 6 then
+		-- ask for preferred skill
+		setTopic(cid, TOPIC_FOOD.SKILL_CHOOSE)
+		npcHandler:say("Yay! I have the ingredients to make a skill boost dish. Would you rather like to boost your {magic}, {melee}, {shielding} or {distance} skill?", cid)
+	else -- deliver the random generated index
+		deliverFood(HIRELING_FOODS[random])
+	end
+end
+
+local function handleFoodActions(cid, msg)
+	local topic = getTopic(cid)
+
+	if topic == TOPIC.FOOD then --initial node
+		if msgcontains(msg, "yes") then
+			cookFood(cid)
+		elseif msgcontains(msg, "no") then
+			setTopic(cid, TOPIC.SERVICES)
+			npcHandler:say("Alright then, ask me for other {services}, if you want.", cid)
+		else --invalid word
+			
+		end
+	elseif topic == TOPIC_FOOD.SKILL_CHOOSE then
+		if msgcontains(msg, "magic") then
+			deliverFood(cid, HIRELING_FOODS_BOOST.MAGIC)
+		elseif msgcontains(msg,"melee") then
+			deliverFood(cid, HIRELING_FOODS_BOOST.MELEE)
+		elseif msgcontains(msg,"shielding") then
+			deliverFood(cid, HIRELING_FOODS_BOOST.SHIELDING)
+		elseif msgcontains(msg,"distance") then
+			deliverFood(cid, HIRELING_FOODS_BOOST.DISTANCE)
+		else
+			npcHandler:say("Sorry, but you must choose a valid skill class. Would you like to boost your {magic}, {melee}, {shielding} or {distance} skill?", cid)
+		end
+	end
+end
+
+-- ======================[[ END COOKER FUNCTIONS ]] ======================== --
 local function creatureSayCallback(cid, type, msg)
 	if (not npcHandler:isFocused(cid)) then
 		return false
 	end
 
-	--TODO validate if user is inside the same house as the hireling
+	local player = Player(cid)
 
-	if(msgcontains(msg, "service")) then
+	if not hireling:canTalkTo(player) then
+		return false
+	end
+	
+	-- roleplay
+	if msgcontains(msg,"sword of fury") then
+		npcHandler:say("In my youth I dreamt to wield it! Now I wield the broom of... brooming. I guess that's the next best thing!", cid)
+	elseif msgcontains(msg,"rookgaard") then
+		npcHandler:say("What an uncivilised place without any culture.", cid)
+	elseif msgcontains(msg,"excalibug") then
+		npcHandler:say("I'll keep an eye open for it when cleaning up the things you brought home!", cid)
+	-- end roleplay
+	elseif(msgcontains(msg, "service")) then
 		setTopic(cid,TOPIC.SERVICES)
 		local servicesMsg = getHirelingServiceString()
 		npcHandler:say(servicesMsg, cid)
@@ -853,14 +1017,14 @@ local function creatureSayCallback(cid, type, msg)
 			if hireling:hasSkill(HIRELING_SKILLS.BANKER) then
 				setTopic(cid, TOPIC.BANK)
 				count[cid], transfer[cid] = nil, nil
-				npcHandler:say(GREETING.BANK, cid)
+				npcHandler:say(GREETINGS.BANK, cid)
 			else
 				sendSkillNotLearned(cid, HIRELING_SKILLS.BANKER)
 			end
 		elseif msgcontains(msg, "food") then
 			if hireling:hasSkill(HIRELING_SKILLS.COOKING) then
 				setTopic(cid, TOPIC.FOOD)
-				npcHandler:say(GREETING.FOOD, cid)
+				npcHandler:say(GREETINGS.FOOD, cid)
 			else
 				sendSkillNotLearned(cid, HIRELING_SKILLS.COOKING)
 			end
@@ -874,31 +1038,23 @@ local function creatureSayCallback(cid, type, msg)
 			end
 		elseif msgcontains(msg, "goods") then
 			setTopic(cid, TOPIC.GOODS)
-			local goodsMsg = getGoodsMessage()
+			local goodsMsg = getGoodsGreetingMessage()
 			npcHandler:say(goodsMsg, cid)
 		end
-	elseif(getTopic(cid) == TOPIC.BANK) then
+	elseif(getTopic(cid) >= TOPIC.BANK and getTopic(cid) < TOPIC.FOOD) then
 		handleBankActions(cid, msg)
-	elseif(getTopic(cid) == TOPIC.GOODS) then
+	elseif(getTopic(cid) >= TOPIC.FOOD and getTopic(cid) < TOPIC.GOODS) then
+		handleFoodActions(cid, msg)
+	elseif(getTopic(cid) >= TOPIC.GOODS) then
 		handleGoodsActions(cid, msg)
 	end
 	return true
 end
 
 npcHandler:setMessage(MESSAGE_GREET, "It is good to see you. I'm always at your {service}")
-npcHandler:setMessage(MESSAGE_FAREWELL, "Farewell, |PLAYERNAME|, may the winds guide your way.")
+npcHandler:setMessage(MESSAGE_FAREWELL, "Farewell, |PLAYERNAME|, I'll be here if you need me again.")
 npcHandler:setMessage(MESSAGE_WALKAWAY, "Come back soon!")
 npcHandler:setMessage(MESSAGE_SENDTRADE, "Take all the time you need to decide what you want!")
 
-local function onTradeRequest(cid)
-	if Player(cid):getStorageValue(Storage.TravellingTrader.Mission07) ~= 1 then
-		npcHandler:say('Sorry, but you do not belong to my exclusive customers. I have to make sure that I can trust in the quality of your wares.', cid)
-		return false
-	end
-
-	return true
-end
-
--- npcHandler:setCallback(CALLBACK_ONTRADEREQUEST, onTradeRequest)
 npcHandler:setCallback(CALLBACK_MESSAGE_DEFAULT, creatureSayCallback)
 npcHandler:addModule(FocusModule:new())

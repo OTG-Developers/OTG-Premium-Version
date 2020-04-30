@@ -24,6 +24,7 @@ DEBUG = true -- print debug to console
 
 
 HIRELINGS = {}
+PLAYER_HIRELINGS = {}
 
 function DebugPrint(str)
   if DEBUG == true then
@@ -40,14 +41,24 @@ HIRELING_SKILLS = {
 }
 
 HIRELING_SKILL_STORAGE = 28800
-
+HIRELING_LAMP_ID = 34070
 HIRELING_SEX = {
   FEMALE = 0,
   MALE = 1
 }
 
--- TODO: fullfill this table
+HIRELING_FOODS_BOOST = {
+  MAGIC = 35174,
+  MELEE = 35175,
+  SHIELDING = 35172,
+  DISTANCE = 35173,
+}
 
+HIRELING_FOODS = { -- only the non-skill ones
+  { 35176, 35177, 35178, 35179, 35180 }
+}
+
+-- TODO: fullfill this table below
 HIRELING_GOODS = {
   VARIOUS = {
     {name="amphora", id=2023, buy=4},
@@ -84,7 +95,8 @@ Hireling = {
   lookhead = 97,
   looklegs = 3,
   looktype = 0,
-  unlocked_outfits = {}
+  unlocked_outfits = {},
+  cid = -1
 }
 
 function Hireling:new(o)
@@ -98,6 +110,14 @@ function Hireling:getOwnerId()
   return self.player_id
 end
 
+function Hireling:getId()
+  return self.id
+end
+
+function Hireling:getName()
+  return self.name
+end
+
 function Hireling:canTalkTo(player)
   if not player then return false end
 
@@ -107,7 +127,7 @@ function Hireling:canTalkTo(player)
   if not house then return false end
 
 
-  return house:getId() == self.house_id and house:isInvited(player)
+  return house:getId() == self.house_id
 end
 
 function Hireling:getPosition()
@@ -119,12 +139,68 @@ function Hireling:hasSkill(SKILL)
   local skills = player:getStorageValue(HIRELING_SKILL_STORAGE)
   return hasBitSet(SKILL, skills)
 end
+
+function Hireling:setCreature(cid)
+  self.cid = cid
+end
+
+function Hireling:spawn()
+  self.active = 1
+  Game.createNpc('Hireling', self:getPosition())
+end
+
+function Hireling:returnToLamp(player_id)
+  local creature = Creature(self.cid)
+  local player = Player(player_id)
+  local lampType = ItemType(HIRELING_LAMP_ID)
+
+  if self:getOwnerId() ~= player_id then
+    return player:sendTextMessage(MESSAGE_INFO_DESCR, "You are not the master of this hireling.")
+  end
+
+  if player:getFreeCapacity() < lampType:getWeight(1) then
+    return player:sendTextMessage(MESSAGE_INFO_DESCR, "You do not have enough capacity.")
+  end
+
+  local inbox = player:getSlotItem(CONST_SLOT_STORE_INBOX)
+  if not inbox or inbox:getEmptySlots() == 0 then
+    player:getPosition():sendMagicEffect(CONST_ME_POFF)
+    return player:sendTextMessage(MESSAGE_INFO_DESCR, "You don't have enough room in your inbox.")
+  end
+
+
+  local lamp = inbox:addItem(HIRELING_LAMP_ID, 1)
+  creature:remove() --remove hireling
+  lamp:setAttribute(ITEM_ATTRIBUTE_DESCRIPTION, "This mysterious lamp summons your very own personal hireling.\nThis item cannot be traded.\nThis magic lamp is the home of" .. self:getName() .. ".")
+  lamp:setAttribute(ITEM_ATTRIBUTE_DATE, self:getId()) --hack to keep hirelingId on item
+  self.active = 0
+end
 -- [[ END CLASS DEFINITION ]]
 
--- [[ GLOBAL FUNCTIONS DEFINITION ]]
+-- [[ LOCAL FUNCTIONS AND UTILS ]]
+
+local function spawnNPCs()
+  print('>> Spawning Hirelings')
+  local hireling
+  for i=1,#HIRELINGS do
+    hireling = HIRELINGS[i]
+    if hireling.active ~= 0 then
+      hireling:spawn()
+    end
+  end
+end
+
+-- [[ GLOBAL FUNCTIONS DEFINITIONS ]]
 
 function getHirelingByPosition(position)
-  --TODO
+  local hireling
+  for i = 1, #HIRELINGS do
+      hireling = HIRELINGS[i]
+      if hireling.posx == position.x and hireling.posy == position.y and hireling.posz == position.z then
+          return hireling
+      end
+  end
+  return nil
 end
 
 function HirelingsInit()
@@ -132,9 +208,10 @@ function HirelingsInit()
 	
 	if rows then
 		repeat
-			local player_id = result.getNumber(rows, "player_id")
-      if not HIRELINGS[player_id] then
-        HIRELINGS[player_id] = {}
+      local player_id = result.getNumber(rows, "player_id")
+
+      if not PLAYER_HIRELINGS[player_id] then
+        PLAYER_HIRELINGS[player_id] = {}
       end
       
       local hireling = Hireling:new()
@@ -161,14 +238,18 @@ function HirelingsInit()
           table.insert(hireling.unlocked_outfits,outfit)
         end
       end
-			table.insert(HIRELINGS[player_id], hireling)
+      table.insert(PLAYER_HIRELINGS[player_id], hireling)
+      table.insert(HIRELINGS, hireling)
+      
 		until not result.next(rows)
+    result.free(rows)
+    
+    spawnNPCs()
 
-		result.free(rows)
 	end
 end
 
-function SaveHireling(hireling)
+function PersistHireling(hireling)
   local unlocked_outfits = ""
   if #hireling.unlocked_outfits > 0 then
     for i=1,#hireling.unlocked_outfits do
@@ -186,7 +267,7 @@ function SaveHireling(hireling)
 
   DebugPrint("hireling created, loading id from db")
 
-  local hirelings = HIRELINGS[hireling.player_id]
+  local hirelings = PLAYER_HIRELINGS[hireling.player_id]
   local ids = ""
   for i=1,#hirelings do
     if i > 1 then
@@ -212,7 +293,7 @@ end
 
 -- [[ Player extension ]]
 function Player:getHirelings()
-  return HIRELINGS[self:getGuid()] or {}
+  return PLAYER_HIRELINGS[self:getGuid()] or {}
 end
 
 function Player:getHirelingsCount()
@@ -232,16 +313,13 @@ function Player:addNewHireling(name, sex)
     hireling.sex = HIRELING_SEX.MALE
   end
 
-  local house = self:getHouse()
-  if house and house:getId() > 0 then
-    hireling.house_id = house:getId()
-  end
-
-  local saved = SaveHireling(hireling)
+  local saved = PersistHireling(hireling)
   if not saved then
     DebugPrint('Error saving Hireling:' .. name .. ' - player:' .. self:getName())
     return nil
   else
+    table.insert(PLAYER_HIRELINGS[self:getGuid()], hireling)
+    table.insert(HIRELINGS, hireling)
     return hireling
   end
 end
